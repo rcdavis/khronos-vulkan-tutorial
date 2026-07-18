@@ -2,6 +2,7 @@ project(Game)
 
 add_executable(Game
     src/Utils/Log.cpp
+    src/Game.cpp
     src/Main.cpp
 )
 
