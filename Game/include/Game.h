@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SDL3/SDL.h"
+
 class Game {
 public:
 	Game() = default;
@@ -14,5 +16,10 @@ private:
 	void Render();
 
 private:
+	SDL_Window* mWindow = nullptr;
+
+	uint32_t mWindowWidth = 1280;
+	uint32_t mWindowHeight = 720;
+
 	bool mIsRunning = false;
 };
