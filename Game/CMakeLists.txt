@@ -4,6 +4,7 @@ add_executable(Game
     src/Utils/Log.cpp
     src/Game.cpp
     src/Main.cpp
+    src/VolkImpl.cpp
 )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -32,5 +33,6 @@ target_compile_features(Game PRIVATE cxx_std_20)
 
 target_link_libraries(Game PRIVATE
     SDL3::SDL3
+    volk
     spdlog::spdlog_header_only
 )

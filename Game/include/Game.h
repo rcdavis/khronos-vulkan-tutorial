@@ -18,8 +18,8 @@ private:
 private:
 	SDL_Window* mWindow = nullptr;
 
-	uint32_t mWindowWidth = 1280;
-	uint32_t mWindowHeight = 720;
+	uint32_t mWindowWidth = 800;
+	uint32_t mWindowHeight = 600;
 
 	bool mIsRunning = false;
 };
