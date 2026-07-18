@@ -2,6 +2,8 @@
 
 #include "Utils/Log.h"
 
+#include "SDL3/SDL_init.h"
+
 Game::~Game() {
 	Shutdown();
 }
