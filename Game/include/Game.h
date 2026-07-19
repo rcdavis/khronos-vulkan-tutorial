@@ -2,6 +2,8 @@
 
 #include "SDL3/SDL_video.h"
 
+#include "VulkanContext.h"
+
 class Game {
 public:
 	Game() = default;
@@ -16,6 +18,8 @@ private:
 	void Render();
 
 private:
+	VulkanContext mVulkanContext;
+
 	SDL_Window* mWindow = nullptr;
 
 	uint32_t mWindowWidth = 800;

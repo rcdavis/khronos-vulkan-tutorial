@@ -5,6 +5,7 @@ add_executable(Game
     src/Game.cpp
     src/Main.cpp
     src/VolkImpl.cpp
+    src/VulkanContext.cpp
 )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
