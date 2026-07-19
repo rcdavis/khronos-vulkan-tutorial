@@ -2,6 +2,18 @@
 
 #include "Utils/Log.h"
 
+#include "Utils/VkUtils.h"
+
+#ifdef NDEBUG
+	constexpr static bool EnableValidationLayers = false;
+#else
+	constexpr static bool EnableValidationLayers = true;
+#endif
+
+constexpr static std::array ValidationLayers = {
+	"VK_LAYER_KHRONOS_validation"
+};
+
 static bool VulkanContext_CreateInstance(VulkanContext& context) {
 	if (volkInitialize() != VK_SUCCESS) {
 		LOG_ERROR("Failed to initialize volk.");
@@ -14,13 +26,22 @@ static bool VulkanContext_CreateInstance(VulkanContext& context) {
 		.applicationVersion = VK_MAKE_VERSION(1, 0, 0),
 		.pEngineName = "No Engine",
 		.engineVersion = VK_MAKE_VERSION(1, 0, 0),
-		.apiVersion = VulkanContext::VkApiVersion
+		.apiVersion = VulkanContext::VkApiVersion,
 	};
 
-	const VkInstanceCreateInfo createInfo {
+	const auto requiredExtensions = Utils::GetRequiredVulkanExtensions(EnableValidationLayers);
+
+	VkInstanceCreateInfo createInfo {
 		.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-		.pApplicationInfo = &appInfo
+		.pApplicationInfo = &appInfo,
+		.enabledExtensionCount = (uint32_t)std::size(requiredExtensions),
+		.ppEnabledExtensionNames = std::data(requiredExtensions),
 	};
+
+	if constexpr (EnableValidationLayers) {
+		createInfo.enabledLayerCount = (uint32_t)std::size(ValidationLayers);
+		createInfo.ppEnabledLayerNames = std::data(ValidationLayers);
+	}
 
 	const VkResult result = vkCreateInstance(&createInfo, nullptr, &context.instance);
 	if (result != VK_SUCCESS) {
