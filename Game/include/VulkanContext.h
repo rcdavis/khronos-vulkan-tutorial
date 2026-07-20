@@ -7,6 +7,8 @@ struct VulkanContext {
 
 	VkInstance instance = VK_NULL_HANDLE;
 
+	VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
+
 	bool Init();
 
 	void Shutdown();

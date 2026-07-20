@@ -4,6 +4,18 @@
 #include "Utils/Log.h"
 
 namespace VkUtils {
+	std::vector<VkLayerProperties> GetInstanceLayerProperties() {
+		uint32_t count = 0;
+		vkEnumerateInstanceLayerProperties(&count, nullptr);
+		if (count == 0)
+			return {};
+
+		std::vector<VkLayerProperties> layers(count);
+		vkEnumerateInstanceLayerProperties(&count, std::data(layers));
+
+		return layers;
+	}
+
 	std::vector<const char*> GetRequiredVulkanExtensions(bool addValidationLayerExtensions) {
 		uint32_t extensionCount = 0;
 		auto extensions = SDL_Vulkan_GetInstanceExtensions(&extensionCount);
