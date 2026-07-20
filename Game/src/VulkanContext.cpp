@@ -38,7 +38,9 @@ static bool VulkanContext_CreateInstance(VulkanContext& context) {
 		.ppEnabledExtensionNames = std::data(requiredExtensions),
 	};
 
+	constexpr auto debugMessengerCreateInfo = VkUtils::CreateDebugMessengerCreateInfo();
 	if constexpr (EnableValidationLayers) {
+		createInfo.pNext = &debugMessengerCreateInfo;
 		createInfo.enabledLayerCount = (uint32_t)std::size(ValidationLayers);
 		createInfo.ppEnabledLayerNames = std::data(ValidationLayers);
 	}
