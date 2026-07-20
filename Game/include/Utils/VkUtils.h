@@ -2,7 +2,7 @@
 
 #include <vector>
 
-namespace Utils {
+namespace VkUtils {
 	// TODO: Move Validation Layer boolean to Config file
 	std::vector<const char*> GetRequiredVulkanExtensions(bool addValidationLayerExtensions = true);
-} // namespace Utils
+} // namespace VkUtils

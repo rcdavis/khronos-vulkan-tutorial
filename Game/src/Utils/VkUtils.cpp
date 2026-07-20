@@ -4,7 +4,7 @@
 #include "SDL3/SDL_vulkan.h"
 #include "Utils/Log.h"
 
-namespace Utils {
+namespace VkUtils {
 	std::vector<const char*> GetRequiredVulkanExtensions(bool addValidationLayerExtensions) {
 		uint32_t extensionCount = 0;
 		auto extensions = SDL_Vulkan_GetInstanceExtensions(&extensionCount);
@@ -20,4 +20,4 @@ namespace Utils {
 
 		return result;
 	}
-} // namespace Utils
+} // namespace VkUtils

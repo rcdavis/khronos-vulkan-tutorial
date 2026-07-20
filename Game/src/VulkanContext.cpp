@@ -29,7 +29,7 @@ static bool VulkanContext_CreateInstance(VulkanContext& context) {
 		.apiVersion = VulkanContext::VkApiVersion,
 	};
 
-	const auto requiredExtensions = Utils::GetRequiredVulkanExtensions(EnableValidationLayers);
+	const auto requiredExtensions = VkUtils::GetRequiredVulkanExtensions(EnableValidationLayers);
 
 	VkInstanceCreateInfo createInfo {
 		.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
