@@ -14,6 +14,24 @@ constexpr static std::array ValidationLayers = {
 	"VK_LAYER_KHRONOS_validation"
 };
 
+static bool CheckValidationLayerSupport() {
+	const auto availableLayers = VkUtils::GetInstanceLayerProperties();
+	for (const char* layerName : ValidationLayers) {
+		bool layerFound = false;
+		for (const auto& layerProps : availableLayers) {
+			if (strcmp(layerName, layerProps.layerName) == 0) {
+				layerFound = true;
+				break;
+			}
+		}
+
+		if (!layerFound)
+			return false;
+	}
+
+	return true;
+}
+
 static bool VulkanContext_CreateInstance(VulkanContext& context) {
 	if (volkInitialize() != VK_SUCCESS) {
 		LOG_ERROR("Failed to initialize volk.");
@@ -38,7 +56,14 @@ static bool VulkanContext_CreateInstance(VulkanContext& context) {
 		.ppEnabledExtensionNames = std::data(requiredExtensions),
 	};
 
+	constexpr auto debugMessengerCreateInfo = VkUtils::CreateDebugMessengerCreateInfo();
 	if constexpr (EnableValidationLayers) {
+		if (!CheckValidationLayerSupport()) {
+			LOG_ERROR("Validation layers requested, but not available.");
+			return false;
+		}
+
+		createInfo.pNext = &debugMessengerCreateInfo;
 		createInfo.enabledLayerCount = (uint32_t)std::size(ValidationLayers);
 		createInfo.ppEnabledLayerNames = std::data(ValidationLayers);
 	}
@@ -60,10 +85,25 @@ bool VulkanContext::Init() {
 		return false;
 	}
 
+	if constexpr (EnableValidationLayers) {
+		constexpr auto debugCreateInfo = VkUtils::CreateDebugMessengerCreateInfo();
+		if (vkCreateDebugUtilsMessengerEXT(instance, &debugCreateInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+			LOG_ERROR("Failed to create debug utils messenger");
+			return false;
+		}
+	}
+
 	return true;
 }
 
 void VulkanContext::Shutdown() {
+	if constexpr (EnableValidationLayers) {
+		if (debugMessenger != VK_NULL_HANDLE) {
+			vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+			debugMessenger = VK_NULL_HANDLE;
+		}
+	}
+
 	if (instance != VK_NULL_HANDLE) {
 		vkDestroyInstance(instance, nullptr);
 		instance = VK_NULL_HANDLE;
