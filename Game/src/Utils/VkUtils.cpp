@@ -2,6 +2,7 @@
 
 #include "SDL3/SDL_vulkan.h"
 #include "Utils/Log.h"
+#include "Config.h"
 
 namespace VkUtils {
 	std::vector<VkLayerProperties> GetInstanceLayerProperties() {
@@ -16,7 +17,7 @@ namespace VkUtils {
 		return layers;
 	}
 
-	std::vector<const char*> GetRequiredVulkanExtensions(bool addValidationLayerExtensions) {
+	std::vector<const char*> GetRequiredVulkanExtensions() {
 		uint32_t extensionCount = 0;
 		auto extensions = SDL_Vulkan_GetInstanceExtensions(&extensionCount);
 		if (!extensions) {
@@ -25,7 +26,7 @@ namespace VkUtils {
 		}
 
 		std::vector<const char*> result(extensions, extensions + extensionCount);
-		if (addValidationLayerExtensions) {
+		if constexpr (Config::EnableValidationLayers) {
 			result.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		}
 
