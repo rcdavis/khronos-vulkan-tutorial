@@ -39,6 +39,11 @@ bool Game::Init() {
 		return false;
 	}
 
+	if (!mVulkanContext.Init()) {
+		LOG_ERROR("Failed to initialize Vulkan context.");
+		return false;
+	}
+
 	mIsRunning = true;
 
 	LOG_INFO("Initialized game successfully!");
@@ -47,6 +52,8 @@ bool Game::Init() {
 
 void Game::Shutdown() {
 	LOG_INFO("Shutting down game...");
+
+	mVulkanContext.Shutdown();
 
 	if (mWindow) {
 		SDL_DestroyWindow(mWindow);

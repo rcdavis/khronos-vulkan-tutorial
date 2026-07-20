@@ -30,3 +30,10 @@ FetchContent_Declare(
     GIT_TAG release-3.4.12
 )
 FetchContent_MakeAvailable(SDL3)
+
+FetchContent_Declare(
+    volk
+    GIT_REPOSITORY https://github.com/zeux/volk.git
+    GIT_TAG 1.4.350
+)
+FetchContent_MakeAvailable(volk)
