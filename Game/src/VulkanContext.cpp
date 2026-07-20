@@ -1,18 +1,14 @@
 #include "VulkanContext.h"
 
 #include "Utils/Log.h"
-
 #include "Utils/VkUtils.h"
-
-#ifdef NDEBUG
-	constexpr static bool EnableValidationLayers = false;
-#else
-	constexpr static bool EnableValidationLayers = true;
-#endif
+#include "Config.h"
 
 constexpr static std::array ValidationLayers = {
 	"VK_LAYER_KHRONOS_validation"
 };
+
+static bool VulkanContext_CreateInstance(VulkanContext& context);
 
 static bool CheckValidationLayerSupport() {
 	const auto availableLayers = VkUtils::GetInstanceLayerProperties();
@@ -32,6 +28,37 @@ static bool CheckValidationLayerSupport() {
 	return true;
 }
 
+bool VulkanContext::Init() {
+	if (!VulkanContext_CreateInstance(*this)) {
+		LOG_ERROR("Failed to create Vulkan instance.");
+		return false;
+	}
+
+	if constexpr (Config::EnableValidationLayers) {
+		constexpr auto debugCreateInfo = VkUtils::CreateDebugMessengerCreateInfo();
+		if (vkCreateDebugUtilsMessengerEXT(instance, &debugCreateInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+			LOG_ERROR("Failed to create debug utils messenger");
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void VulkanContext::Shutdown() {
+	if constexpr (Config::EnableValidationLayers) {
+		if (debugMessenger != VK_NULL_HANDLE) {
+			vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+			debugMessenger = VK_NULL_HANDLE;
+		}
+	}
+
+	if (instance != VK_NULL_HANDLE) {
+		vkDestroyInstance(instance, nullptr);
+		instance = VK_NULL_HANDLE;
+	}
+}
+
 static bool VulkanContext_CreateInstance(VulkanContext& context) {
 	if (volkInitialize() != VK_SUCCESS) {
 		LOG_ERROR("Failed to initialize volk.");
@@ -47,7 +74,7 @@ static bool VulkanContext_CreateInstance(VulkanContext& context) {
 		.apiVersion = VulkanContext::VkApiVersion,
 	};
 
-	const auto requiredExtensions = VkUtils::GetRequiredVulkanExtensions(EnableValidationLayers);
+	const auto requiredExtensions = VkUtils::GetRequiredVulkanExtensions();
 
 	VkInstanceCreateInfo createInfo {
 		.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
@@ -57,7 +84,7 @@ static bool VulkanContext_CreateInstance(VulkanContext& context) {
 	};
 
 	constexpr auto debugMessengerCreateInfo = VkUtils::CreateDebugMessengerCreateInfo();
-	if constexpr (EnableValidationLayers) {
+	if constexpr (Config::EnableValidationLayers) {
 		if (!CheckValidationLayerSupport()) {
 			LOG_ERROR("Validation layers requested, but not available.");
 			return false;
@@ -77,35 +104,4 @@ static bool VulkanContext_CreateInstance(VulkanContext& context) {
 	volkLoadInstance(context.instance);
 
 	return true;
-}
-
-bool VulkanContext::Init() {
-	if (!VulkanContext_CreateInstance(*this)) {
-		LOG_ERROR("Failed to create Vulkan instance.");
-		return false;
-	}
-
-	if constexpr (EnableValidationLayers) {
-		constexpr auto debugCreateInfo = VkUtils::CreateDebugMessengerCreateInfo();
-		if (vkCreateDebugUtilsMessengerEXT(instance, &debugCreateInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
-			LOG_ERROR("Failed to create debug utils messenger");
-			return false;
-		}
-	}
-
-	return true;
-}
-
-void VulkanContext::Shutdown() {
-	if constexpr (EnableValidationLayers) {
-		if (debugMessenger != VK_NULL_HANDLE) {
-			vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
-			debugMessenger = VK_NULL_HANDLE;
-		}
-	}
-
-	if (instance != VK_NULL_HANDLE) {
-		vkDestroyInstance(instance, nullptr);
-		instance = VK_NULL_HANDLE;
-	}
 }
