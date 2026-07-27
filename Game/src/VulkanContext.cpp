@@ -3,12 +3,16 @@
 #include "Utils/Log.h"
 #include "Utils/VkUtils.h"
 #include "Config.h"
+#include "vulkan/vulkan_core.h"
 
 constexpr static std::array ValidationLayers = {
 	"VK_LAYER_KHRONOS_validation"
 };
 
 static bool VulkanContext_CreateInstance(VulkanContext& context);
+static bool VulkanContext_CreateDevice(VulkanContext& context);
+
+static int VulkanContext_GetDeviceScore(VkPhysicalDevice device);
 
 static bool CheckValidationLayerSupport() {
 	const auto availableLayers = VkUtils::GetInstanceLayerProperties();
@@ -42,6 +46,11 @@ bool VulkanContext::Init() {
 		}
 	}
 
+	if (!VulkanContext_CreateDevice(*this)) {
+		LOG_ERROR("Failed to create Vulkan device.");
+		return false;
+	}
+
 	return true;
 }
 
@@ -57,6 +66,8 @@ void VulkanContext::Shutdown() {
 		vkDestroyInstance(instance, nullptr);
 		instance = VK_NULL_HANDLE;
 	}
+
+	physicalDevice = VK_NULL_HANDLE;
 }
 
 static bool VulkanContext_CreateInstance(VulkanContext& context) {
@@ -104,4 +115,102 @@ static bool VulkanContext_CreateInstance(VulkanContext& context) {
 	volkLoadInstance(context.instance);
 
 	return true;
+}
+
+static bool VulkanContext_CreateDevice(VulkanContext& context) {
+	const auto physicalDevices = VkUtils::GetPhysicalDevices(context.instance);
+	if (std::empty(physicalDevices)) {
+		LOG_ERROR("Failed to find any Vulkan physical devices.");
+		return false;
+	}
+
+	int bestScore = 0;
+	VkPhysicalDevice bestDevice = VK_NULL_HANDLE;
+	for (VkPhysicalDevice device : physicalDevices) {
+		const int score = VulkanContext_GetDeviceScore(device);
+		if (score > bestScore) {
+			bestScore = score;
+			bestDevice = device;
+		}
+	}
+
+	if (bestDevice == VK_NULL_HANDLE) {
+		LOG_ERROR("Failed to find a suitable Vulkan physical device.");
+		return false;
+	}
+
+	context.physicalDevice = bestDevice;
+	return true;
+}
+
+static int VulkanContext_GetDeviceScore(VkPhysicalDevice device) {
+	VkPhysicalDeviceProperties deviceProperties;
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+	int score = 0;
+	if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+		score += 1000;
+	} else if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
+		score += 500;
+	} else {
+		LOG_WARN("Vulkan physical device is not a discrete or integrated GPU: {}", deviceProperties.deviceName);
+		return -1;
+	}
+
+	VkPhysicalDeviceVulkan12Features features12 {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+	};
+
+	VkPhysicalDeviceVulkan13Features features13 {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+		.pNext = &features12,
+	};
+
+	VkPhysicalDeviceFeatures2 features2 {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+		.pNext = &features13,
+	};
+	vkGetPhysicalDeviceFeatures2(device, &features2);
+
+	if (!features2.features.samplerAnisotropy) {
+		LOG_WARN("Vulkan physical device does not support sampler anisotropy: {}", deviceProperties.deviceName);
+		return -1;
+	}
+
+	if (!features12.bufferDeviceAddress) {
+		LOG_WARN("Vulkan physical device does not support buffer device address: {}", deviceProperties.deviceName);
+		return -1;
+	}
+
+	if (!features12.descriptorIndexing) {
+		LOG_WARN("Vulkan physical device does not support descriptor indexing: {}", deviceProperties.deviceName);
+		return -1;
+	}
+
+	if (!features12.shaderSampledImageArrayNonUniformIndexing) {
+		LOG_WARN("Vulkan physical device does not support shader sampled image array non uniform indexing: {}", deviceProperties.deviceName);
+		return -1;
+	}
+
+	if (!features12.descriptorBindingVariableDescriptorCount) {
+		LOG_WARN("Vulkan physical device does not support descriptor binding variable descriptor count: {}", deviceProperties.deviceName);
+		return -1;
+	}
+
+	if (!features12.runtimeDescriptorArray) {
+		LOG_WARN("Vulkan physical device does not support runtime descriptor array: {}", deviceProperties.deviceName);
+		return -1;
+	}
+
+	if (!features13.synchronization2) {
+		LOG_WARN("Vulkan physical device does not support synchronization2: {}", deviceProperties.deviceName);
+		return -1;
+	}
+
+	if (!features13.dynamicRendering) {
+		LOG_WARN("Vulkan physical device does not support dynamic rendering: {}", deviceProperties.deviceName);
+		return -1;
+	}
+
+	return score;
 }

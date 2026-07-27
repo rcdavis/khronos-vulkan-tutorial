@@ -17,6 +17,18 @@ namespace VkUtils {
 		return layers;
 	}
 
+	std::vector<VkPhysicalDevice> GetPhysicalDevices(VkInstance instance) {
+		uint32_t count = 0;
+		vkEnumeratePhysicalDevices(instance, &count, nullptr);
+		if (count == 0)
+			return {};
+
+		std::vector<VkPhysicalDevice> devices(count);
+		vkEnumeratePhysicalDevices(instance, &count, std::data(devices));
+
+		return devices;
+	}
+
 	std::vector<const char*> GetRequiredVulkanExtensions() {
 		uint32_t extensionCount = 0;
 		auto extensions = SDL_Vulkan_GetInstanceExtensions(&extensionCount);

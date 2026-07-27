@@ -7,7 +7,8 @@
 namespace VkUtils {
 	std::vector<VkLayerProperties> GetInstanceLayerProperties();
 
-	// TODO: Move Validation Layer boolean to Config file
+	std::vector<VkPhysicalDevice> GetPhysicalDevices(VkInstance instance);
+
 	std::vector<const char*> GetRequiredVulkanExtensions();
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(

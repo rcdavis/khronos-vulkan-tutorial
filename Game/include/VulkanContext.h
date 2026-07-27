@@ -9,6 +9,8 @@ struct VulkanContext {
 
 	VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
 
+	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+
 	bool Init();
 
 	void Shutdown();
