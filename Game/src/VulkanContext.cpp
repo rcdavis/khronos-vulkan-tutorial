@@ -8,6 +8,10 @@ constexpr static std::array ValidationLayers = {
 	"VK_LAYER_KHRONOS_validation"
 };
 
+constexpr static std::array RequiredDeviceExtensions = {
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
+
 static bool VulkanContext_CreateInstance(VulkanContext& context);
 static bool VulkanContext_CreateDevice(VulkanContext& context);
 
@@ -25,6 +29,25 @@ static bool CheckValidationLayerSupport() {
 		}
 
 		if (!layerFound)
+			return false;
+	}
+
+	return true;
+}
+
+static bool CheckDeviceExtensionSupport(VkPhysicalDevice device) {
+	const auto availableExtensions = VkUtils::GetDeviceExtensionProperties(device);
+
+	for (const char* requiredExtension : RequiredDeviceExtensions) {
+		bool extensionFound = false;
+		for (const auto& extensionProps : availableExtensions) {
+			if (strcmp(requiredExtension, extensionProps.extensionName) == 0) {
+				extensionFound = true;
+				break;
+			}
+		}
+
+		if (!extensionFound)
 			return false;
 	}
 
@@ -162,6 +185,11 @@ static int VulkanContext_GetDeviceScore(VkPhysicalDevice device) {
 		score += 500;
 	} else {
 		LOG_WARN("Vulkan physical device is not a discrete or integrated GPU: {}", deviceProperties.deviceName);
+		return -1;
+	}
+
+	if (!CheckDeviceExtensionSupport(device)) {
+		LOG_WARN("Vulkan physical device does not support required extensions: {}", deviceProperties.deviceName);
 		return -1;
 	}
 

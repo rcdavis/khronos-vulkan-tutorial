@@ -41,6 +41,18 @@ namespace VkUtils {
 		return queueFamilies;
 	}
 
+	std::vector<VkExtensionProperties> GetDeviceExtensionProperties(VkPhysicalDevice device) {
+		uint32_t count = 0;
+		vkEnumerateDeviceExtensionProperties(device, nullptr, &count, nullptr);
+		if (count == 0)
+			return {};
+
+		std::vector<VkExtensionProperties> extensions(count);
+		vkEnumerateDeviceExtensionProperties(device, nullptr, &count, std::data(extensions));
+
+		return extensions;
+	}
+
 	std::vector<const char*> GetRequiredVulkanExtensions() {
 		uint32_t extensionCount = 0;
 		auto extensions = SDL_Vulkan_GetInstanceExtensions(&extensionCount);

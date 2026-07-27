@@ -13,6 +13,8 @@ namespace VkUtils {
 
 	std::vector<VkQueueFamilyProperties> GetQueueFamilyProperties(VkPhysicalDevice device);
 
+	std::vector<VkExtensionProperties> GetDeviceExtensionProperties(VkPhysicalDevice device);
+
 	std::vector<const char*> GetRequiredVulkanExtensions();
 
 	uint32_t FindGraphicsPresentQueueFamilyIndex(VkInstance instance, VkPhysicalDevice device);
