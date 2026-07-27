@@ -29,6 +29,18 @@ namespace VkUtils {
 		return devices;
 	}
 
+	std::vector<VkQueueFamilyProperties> GetQueueFamilyProperties(VkPhysicalDevice device) {
+		uint32_t count = 0;
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &count, nullptr);
+		if (count == 0)
+			return {};
+
+		std::vector<VkQueueFamilyProperties> queueFamilies(count);
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &count, std::data(queueFamilies));
+
+		return queueFamilies;
+	}
+
 	std::vector<const char*> GetRequiredVulkanExtensions() {
 		uint32_t extensionCount = 0;
 		auto extensions = SDL_Vulkan_GetInstanceExtensions(&extensionCount);
@@ -43,6 +55,19 @@ namespace VkUtils {
 		}
 
 		return result;
+	}
+
+	uint32_t FindGraphicsPresentQueueFamilyIndex(VkInstance instance, VkPhysicalDevice device) {
+		const auto queueFamilies = GetQueueFamilyProperties(device);
+		for (uint32_t i = 0; i < queueFamilies.size(); ++i) {
+			if (!(queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
+				continue;
+
+			if (SDL_Vulkan_GetPresentationSupport(instance, device, i))
+				return i;
+		}
+
+		return InvalidQueueFamilyIndex;
 	}
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(

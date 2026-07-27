@@ -5,11 +5,17 @@
 #include <vector>
 
 namespace VkUtils {
+	constexpr uint32_t InvalidQueueFamilyIndex = UINT32_MAX;
+
 	std::vector<VkLayerProperties> GetInstanceLayerProperties();
 
 	std::vector<VkPhysicalDevice> GetPhysicalDevices(VkInstance instance);
 
+	std::vector<VkQueueFamilyProperties> GetQueueFamilyProperties(VkPhysicalDevice device);
+
 	std::vector<const char*> GetRequiredVulkanExtensions();
+
+	uint32_t FindGraphicsPresentQueueFamilyIndex(VkInstance instance, VkPhysicalDevice device);
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
 		VkDebugUtilsMessageSeverityFlagBitsEXT severity,

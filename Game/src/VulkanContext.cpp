@@ -1,7 +1,6 @@
 #include "VulkanContext.h"
 
 #include "Utils/Log.h"
-#include "Utils/VkUtils.h"
 #include "Config.h"
 #include "vulkan/vulkan_core.h"
 
@@ -68,6 +67,7 @@ void VulkanContext::Shutdown() {
 	}
 
 	physicalDevice = VK_NULL_HANDLE;
+	graphicsQueueFamilyIndex = VkUtils::InvalidQueueFamilyIndex;
 }
 
 static bool VulkanContext_CreateInstance(VulkanContext& context) {
@@ -139,7 +139,15 @@ static bool VulkanContext_CreateDevice(VulkanContext& context) {
 		return false;
 	}
 
+	uint32_t queueFamilyIndex = VkUtils::FindGraphicsPresentQueueFamilyIndex(context.instance, bestDevice);
+	if (queueFamilyIndex == VkUtils::InvalidQueueFamilyIndex) {
+		LOG_ERROR("Failed to find a suitable Vulkan queue family index.");
+		return false;
+	}
+
 	context.physicalDevice = bestDevice;
+	context.graphicsQueueFamilyIndex = queueFamilyIndex;
+
 	return true;
 }
 
