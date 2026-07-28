@@ -178,13 +178,22 @@ static int VulkanContext_GetDeviceScore(VkPhysicalDevice device) {
 	VkPhysicalDeviceProperties deviceProperties;
 	vkGetPhysicalDeviceProperties(device, &deviceProperties);
 
+	if (deviceProperties.apiVersion < VulkanContext::VkApiVersion) {
+		LOG_WARN("Vulkan physical device does not support required API version: {}", deviceProperties.deviceName);
+		return -1;
+	}
+
 	int score = 0;
 	if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
 		score += 1000;
 	} else if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
 		score += 500;
+	} else if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU) {
+		score += 100;
+	} else if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU) {
+		score += 50;
 	} else {
-		LOG_WARN("Vulkan physical device is not a discrete or integrated GPU: {}", deviceProperties.deviceName);
+		LOG_WARN("Vulkan physical device is an unknown type: {}", deviceProperties.deviceName);
 		return -1;
 	}
 
