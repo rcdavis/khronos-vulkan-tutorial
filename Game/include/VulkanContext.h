@@ -13,6 +13,8 @@ struct VulkanContext {
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device = VK_NULL_HANDLE;
 
+	VkQueue graphicsQueue = VK_NULL_HANDLE;
+
 	uint32_t graphicsQueueFamilyIndex = VkUtils::InvalidQueueFamilyIndex;
 
 	bool Init();

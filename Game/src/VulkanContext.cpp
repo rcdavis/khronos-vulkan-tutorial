@@ -94,6 +94,7 @@ void VulkanContext::Shutdown() {
 		instance = VK_NULL_HANDLE;
 	}
 
+	graphicsQueue = VK_NULL_HANDLE;
 	physicalDevice = VK_NULL_HANDLE;
 	graphicsQueueFamilyIndex = VkUtils::InvalidQueueFamilyIndex;
 }
@@ -215,6 +216,8 @@ static bool VulkanContext_CreateDevice(VulkanContext& context) {
 		LOG_ERROR("Failed to create Vulkan device.");
 		return false;
 	}
+
+	vkGetDeviceQueue(context.device, queueFamilyIndex, 0, &context.graphicsQueue);
 
 	volkLoadDevice(context.device);
 
