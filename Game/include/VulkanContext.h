@@ -11,6 +11,7 @@ struct VulkanContext {
 	VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
 
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+	VkDevice device = VK_NULL_HANDLE;
 
 	uint32_t graphicsQueueFamilyIndex = VkUtils::InvalidQueueFamilyIndex;
 

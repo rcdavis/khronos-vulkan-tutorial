@@ -77,6 +77,11 @@ bool VulkanContext::Init() {
 }
 
 void VulkanContext::Shutdown() {
+	if (device != VK_NULL_HANDLE) {
+		vkDestroyDevice(device, nullptr);
+		device = VK_NULL_HANDLE;
+	}
+
 	if constexpr (Config::EnableValidationLayers) {
 		if (debugMessenger != VK_NULL_HANDLE) {
 			vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
@@ -167,6 +172,51 @@ static bool VulkanContext_CreateDevice(VulkanContext& context) {
 		LOG_ERROR("Failed to find a suitable Vulkan queue family index.");
 		return false;
 	}
+
+	constexpr float queuePriority = 1.0f;
+	const VkDeviceQueueCreateInfo queueCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+		.queueFamilyIndex = queueFamilyIndex,
+		.queueCount = 1,
+		.pQueuePriorities = &queuePriority,
+	};
+
+	VkPhysicalDeviceVulkan12Features features12 {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+		.descriptorIndexing = VK_TRUE,
+		.shaderSampledImageArrayNonUniformIndexing = VK_TRUE,
+		.descriptorBindingVariableDescriptorCount = VK_TRUE,
+		.runtimeDescriptorArray = VK_TRUE,
+		.bufferDeviceAddress = VK_TRUE,
+	};
+
+	VkPhysicalDeviceVulkan13Features features13 {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+		.pNext = &features12,
+		.synchronization2 = VK_TRUE,
+		.dynamicRendering = VK_TRUE,
+	};
+
+	constexpr VkPhysicalDeviceFeatures enabledFeatures {
+		.samplerAnisotropy = VK_TRUE,
+	};
+
+	const VkDeviceCreateInfo createInfo {
+		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+		.pNext = &features13,
+		.queueCreateInfoCount = 1,
+		.pQueueCreateInfos = &queueCreateInfo,
+		.enabledExtensionCount = (uint32_t)std::size(RequiredDeviceExtensions),
+		.ppEnabledExtensionNames = std::data(RequiredDeviceExtensions),
+		.pEnabledFeatures = &enabledFeatures,
+	};
+
+	if (vkCreateDevice(bestDevice, &createInfo, nullptr, &context.device) != VK_SUCCESS) {
+		LOG_ERROR("Failed to create Vulkan device.");
+		return false;
+	}
+
+	volkLoadDevice(context.device);
 
 	context.physicalDevice = bestDevice;
 	context.graphicsQueueFamilyIndex = queueFamilyIndex;
