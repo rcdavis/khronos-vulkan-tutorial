@@ -3,12 +3,26 @@
 #include "volk.h"
 
 #include <vector>
+#include <span>
 
 namespace VkUtils {
+	constexpr uint32_t InvalidQueueFamilyIndex = UINT32_MAX;
+
 	std::vector<VkLayerProperties> GetInstanceLayerProperties();
 
-	// TODO: Move Validation Layer boolean to Config file
+	std::vector<VkPhysicalDevice> GetPhysicalDevices(VkInstance instance);
+
+	std::vector<VkQueueFamilyProperties> GetQueueFamilyProperties(VkPhysicalDevice device);
+
+	std::vector<VkExtensionProperties> GetDeviceExtensionProperties(VkPhysicalDevice device);
+
+	bool CheckInstanceLayerSupport(std::span<const char* const> requiredLayers);
+
+	bool CheckDeviceExtensionSupport(VkPhysicalDevice device, std::span<const char* const> requiredExtensions);
+
 	std::vector<const char*> GetRequiredVulkanExtensions();
+
+	uint32_t FindGraphicsPresentQueueFamilyIndex(VkInstance instance, VkPhysicalDevice device);
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
 		VkDebugUtilsMessageSeverityFlagBitsEXT severity,
