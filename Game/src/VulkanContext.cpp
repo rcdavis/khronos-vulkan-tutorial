@@ -17,43 +17,6 @@ static bool VulkanContext_CreateDevice(VulkanContext& context);
 
 static int VulkanContext_GetDeviceScore(VkPhysicalDevice device);
 
-static bool CheckValidationLayerSupport() {
-	const auto availableLayers = VkUtils::GetInstanceLayerProperties();
-	for (const char* layerName : ValidationLayers) {
-		bool layerFound = false;
-		for (const auto& layerProps : availableLayers) {
-			if (strcmp(layerName, layerProps.layerName) == 0) {
-				layerFound = true;
-				break;
-			}
-		}
-
-		if (!layerFound)
-			return false;
-	}
-
-	return true;
-}
-
-static bool CheckDeviceExtensionSupport(VkPhysicalDevice device) {
-	const auto availableExtensions = VkUtils::GetDeviceExtensionProperties(device);
-
-	for (const char* requiredExtension : RequiredDeviceExtensions) {
-		bool extensionFound = false;
-		for (const auto& extensionProps : availableExtensions) {
-			if (strcmp(requiredExtension, extensionProps.extensionName) == 0) {
-				extensionFound = true;
-				break;
-			}
-		}
-
-		if (!extensionFound)
-			return false;
-	}
-
-	return true;
-}
-
 bool VulkanContext::Init() {
 	if (!VulkanContext_CreateInstance(*this)) {
 		LOG_ERROR("Failed to create Vulkan instance.");
@@ -125,7 +88,7 @@ static bool VulkanContext_CreateInstance(VulkanContext& context) {
 
 	constexpr auto debugMessengerCreateInfo = VkUtils::CreateDebugMessengerCreateInfo();
 	if constexpr (Config::EnableValidationLayers) {
-		if (!CheckValidationLayerSupport()) {
+		if (!VkUtils::CheckInstanceLayerSupport(ValidationLayers)) {
 			LOG_ERROR("Validation layers requested, but not available.");
 			return false;
 		}
@@ -250,7 +213,7 @@ static int VulkanContext_GetDeviceScore(VkPhysicalDevice device) {
 		return -1;
 	}
 
-	if (!CheckDeviceExtensionSupport(device)) {
+	if (!VkUtils::CheckDeviceExtensionSupport(device, RequiredDeviceExtensions)) {
 		LOG_WARN("Vulkan physical device does not support required extensions: {}", deviceProperties.deviceName);
 		return -1;
 	}

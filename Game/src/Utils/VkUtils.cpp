@@ -53,6 +53,44 @@ namespace VkUtils {
 		return extensions;
 	}
 
+	bool CheckInstanceLayerSupport(std::span<const char* const> requiredLayers) {
+		const auto availableLayers = GetInstanceLayerProperties();
+
+		for (const char* requiredLayer : requiredLayers) {
+			bool layerFound = false;
+			for (const auto& layerProps : availableLayers) {
+				if (strcmp(requiredLayer, layerProps.layerName) == 0) {
+					layerFound = true;
+					break;
+				}
+			}
+
+			if (!layerFound)
+				return false;
+		}
+
+		return true;
+	}
+
+	bool CheckDeviceExtensionSupport(VkPhysicalDevice device, std::span<const char* const> requiredExtensions) {
+		const auto availableExtensions = GetDeviceExtensionProperties(device);
+
+		for (const char* requiredExtension : requiredExtensions) {
+			bool extensionFound = false;
+			for (const auto& extensionProps : availableExtensions) {
+				if (strcmp(requiredExtension, extensionProps.extensionName) == 0) {
+					extensionFound = true;
+					break;
+				}
+			}
+
+			if (!extensionFound)
+				return false;
+		}
+
+		return true;
+	}
+
 	std::vector<const char*> GetRequiredVulkanExtensions() {
 		uint32_t extensionCount = 0;
 		auto extensions = SDL_Vulkan_GetInstanceExtensions(&extensionCount);

@@ -3,6 +3,7 @@
 #include "volk.h"
 
 #include <vector>
+#include <span>
 
 namespace VkUtils {
 	constexpr uint32_t InvalidQueueFamilyIndex = UINT32_MAX;
@@ -14,6 +15,10 @@ namespace VkUtils {
 	std::vector<VkQueueFamilyProperties> GetQueueFamilyProperties(VkPhysicalDevice device);
 
 	std::vector<VkExtensionProperties> GetDeviceExtensionProperties(VkPhysicalDevice device);
+
+	bool CheckInstanceLayerSupport(std::span<const char* const> requiredLayers);
+
+	bool CheckDeviceExtensionSupport(VkPhysicalDevice device, std::span<const char* const> requiredExtensions);
 
 	std::vector<const char*> GetRequiredVulkanExtensions();
 
