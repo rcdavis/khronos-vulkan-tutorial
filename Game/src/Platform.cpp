@@ -4,17 +4,26 @@
 #include "SDL3/SDL_error.h"
 #include "Utils/Log.h"
 
-bool Platform::Init(const char* title, uint32_t width, uint32_t height) {
+bool Platform::Init(const WindowDesc& desc) {
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
 		LOG_ERROR("Failed to initialize SDL: {}", SDL_GetError());
 		return false;
 	}
 
-	window = SDL_CreateWindow(title, width, height, SDL_WINDOW_VULKAN);
+	SDL_WindowFlags windowFlags = SDL_WINDOW_VULKAN;
+	if (desc.isResizable)
+		windowFlags |= SDL_WINDOW_RESIZABLE;
+	if (desc.isFullscreen)
+		windowFlags |= SDL_WINDOW_FULLSCREEN;
+
+	window = SDL_CreateWindow(desc.title, desc.width, desc.height, windowFlags);
 	if (!window) {
 		LOG_ERROR("Failed to create window: {}", SDL_GetError());
 		return false;
 	}
+
+	width = desc.width;
+	height = desc.height;
 
 	return true;
 }

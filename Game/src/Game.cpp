@@ -27,7 +27,15 @@ void Game::Run() {
 }
 
 bool Game::Init() {
-	if (!mPlatform.Init("Khronos Vulkan Tutorial", 800, 600)) {
+	constexpr WindowDesc windowDesc {
+		.title = "Khronos Vulkan Tutorial",
+		.width = 800,
+		.height = 600,
+		.isResizable = false,
+		.isFullscreen = false,
+	};
+
+	if (!mPlatform.Init(windowDesc)) {
 		LOG_ERROR("Failed to initialize platform.");
 		return false;
 	}
