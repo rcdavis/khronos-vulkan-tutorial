@@ -1,7 +1,6 @@
 #pragma once
 
-#include "SDL3/SDL_video.h"
-
+#include "Platform.h"
 #include "VulkanContext.h"
 
 class Game {
@@ -18,12 +17,8 @@ private:
 	void Render();
 
 private:
+	Platform mPlatform;
 	VulkanContext mVulkanContext;
-
-	SDL_Window* mWindow = nullptr;
-
-	uint32_t mWindowWidth = 800;
-	uint32_t mWindowHeight = 600;
 
 	bool mIsRunning = false;
 };
