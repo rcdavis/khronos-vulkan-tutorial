@@ -4,6 +4,10 @@
 #include "Config.h"
 #include "vulkan/vulkan_core.h"
 
+#include "Platform.h"
+
+constexpr static VkFormat ImageFormat = VK_FORMAT_B8G8R8A8_SRGB;
+
 constexpr static std::array ValidationLayers = {
 	"VK_LAYER_KHRONOS_validation"
 };
@@ -14,10 +18,11 @@ constexpr static std::array RequiredDeviceExtensions = {
 
 static bool VulkanContext_CreateInstance(VulkanContext& context);
 static bool VulkanContext_CreateDevice(VulkanContext& context);
+static bool VulkanContext_CreateSwapchain(VulkanContext& context, Platform& platform);
 
 static int VulkanContext_GetDeviceScore(VkPhysicalDevice device);
 
-bool VulkanContext::Init() {
+bool VulkanContext::Init(Platform& platform) {
 	if (!VulkanContext_CreateInstance(*this)) {
 		LOG_ERROR("Failed to create Vulkan instance.");
 		return false;
@@ -36,10 +41,25 @@ bool VulkanContext::Init() {
 		return false;
 	}
 
+	if (!VulkanContext_CreateSwapchain(*this, platform)) {
+		LOG_ERROR("Failed to create Vulkan swapchain.");
+		return false;
+	}
+
 	return true;
 }
 
 void VulkanContext::Shutdown() {
+	if (swapchain != VK_NULL_HANDLE) {
+		vkDestroySwapchainKHR(device, swapchain, nullptr);
+		swapchain = VK_NULL_HANDLE;
+	}
+
+	if (surface != VK_NULL_HANDLE) {
+		vkDestroySurfaceKHR(instance, surface, nullptr);
+		surface = VK_NULL_HANDLE;
+	}
+
 	if (device != VK_NULL_HANDLE) {
 		vkDestroyDevice(device, nullptr);
 		device = VK_NULL_HANDLE;
@@ -59,6 +79,7 @@ void VulkanContext::Shutdown() {
 
 	graphicsQueue = VK_NULL_HANDLE;
 	physicalDevice = VK_NULL_HANDLE;
+	swapchainExtent = {};
 	graphicsQueueFamilyIndex = VkUtils::InvalidQueueFamilyIndex;
 }
 
@@ -186,6 +207,52 @@ static bool VulkanContext_CreateDevice(VulkanContext& context) {
 
 	context.physicalDevice = bestDevice;
 	context.graphicsQueueFamilyIndex = queueFamilyIndex;
+
+	return true;
+}
+
+static bool VulkanContext_CreateSwapchain(VulkanContext& context, Platform& platform) {
+	context.surface = platform.window.CreateVulkanSurface(context.instance);
+	if (context.surface == VK_NULL_HANDLE) {
+		LOG_ERROR("Failed to create Vulkan surface.");
+		return false;
+	}
+
+	VkSurfaceCapabilitiesKHR surfaceCapabilities {};
+	if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.physicalDevice, context.surface, &surfaceCapabilities) != VK_SUCCESS) {
+		LOG_ERROR("Failed to get Vulkan surface capabilities.");
+		return false;
+	}
+
+	context.swapchainExtent = surfaceCapabilities.currentExtent;
+	if (context.swapchainExtent.width == 0xFFFFFFFF) {
+		context.swapchainExtent = {
+			.width = std::clamp(platform.window.width, surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width),
+			.height = std::clamp(platform.window.height, surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height),
+		};
+	}
+
+	constexpr VkFormat desiredFormat = ImageFormat;
+	const VkSwapchainCreateInfoKHR swapchainCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+		.surface = context.surface,
+		.minImageCount = surfaceCapabilities.minImageCount,
+		.imageFormat = desiredFormat,
+		.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+		.imageExtent = context.swapchainExtent,
+		.imageArrayLayers = 1,
+		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.preTransform = surfaceCapabilities.currentTransform,
+		.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+		.presentMode = VK_PRESENT_MODE_FIFO_KHR,
+		.clipped = VK_TRUE,
+	};
+
+	if (vkCreateSwapchainKHR(context.device, &swapchainCreateInfo, nullptr, &context.swapchain) != VK_SUCCESS) {
+		LOG_ERROR("Failed to create Vulkan swapchain.");
+		return false;
+	}
 
 	return true;
 }

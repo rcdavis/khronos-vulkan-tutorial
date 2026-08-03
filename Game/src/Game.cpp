@@ -40,7 +40,7 @@ bool Game::Init() {
 		return false;
 	}
 
-	if (!mVulkanContext.Init()) {
+	if (!mVulkanContext.Init(mPlatform)) {
 		LOG_ERROR("Failed to initialize Vulkan context.");
 		return false;
 	}
