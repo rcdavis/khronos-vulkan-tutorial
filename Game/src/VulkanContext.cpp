@@ -236,7 +236,7 @@ static bool VulkanContext_CreateSwapchain(VulkanContext& context, Platform& plat
 	const VkSwapchainCreateInfoKHR swapchainCreateInfo {
 		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
 		.surface = context.surface,
-		.minImageCount = surfaceCapabilities.minImageCount,
+		.minImageCount = surfaceCapabilities.minImageCount + 1,
 		.imageFormat = desiredFormat,
 		.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
 		.imageExtent = context.swapchainExtent,
