@@ -1,5 +1,6 @@
 #pragma once
 
+#include "volk.h"
 #include <SDL3/SDL_video.h>
 
 struct WindowDesc {
@@ -18,4 +19,6 @@ struct Window {
 	bool Init(const WindowDesc& desc);
 
 	void Destroy();
+
+	VkSurfaceKHR CreateVulkanSurface(VkInstance instance) const;
 };
