@@ -10,32 +10,16 @@ bool Platform::Init(const WindowDesc& desc) {
 		return false;
 	}
 
-	SDL_WindowFlags windowFlags = SDL_WINDOW_VULKAN;
-	if (desc.isResizable)
-		windowFlags |= SDL_WINDOW_RESIZABLE;
-	if (desc.isFullscreen)
-		windowFlags |= SDL_WINDOW_FULLSCREEN;
-
-	window = SDL_CreateWindow(desc.title, desc.width, desc.height, windowFlags);
-	if (!window) {
-		LOG_ERROR("Failed to create window: {}", SDL_GetError());
+	if (!window.Init(desc)) {
+		LOG_ERROR("Failed to init window");
 		return false;
 	}
-
-	width = desc.width;
-	height = desc.height;
 
 	return true;
 }
 
 void Platform::Destroy() {
-	if (window) {
-		SDL_DestroyWindow(window);
-		window = nullptr;
-	}
+	window.Destroy();
 
 	SDL_Quit();
-
-	width = 0;
-	height = 0;
 }
