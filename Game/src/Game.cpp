@@ -1,8 +1,7 @@
 #include "Game.h"
 
+#include "SDL3/SDL_events.h"
 #include "Utils/Log.h"
-
-#include "SDL3/SDL_init.h"
 
 Game::~Game() {
 	Shutdown();
@@ -28,14 +27,16 @@ void Game::Run() {
 }
 
 bool Game::Init() {
-	if (!SDL_Init(SDL_INIT_VIDEO)) {
-		LOG_ERROR("Failed to initialize SDL: {}", SDL_GetError());
-		return false;
-	}
+	constexpr WindowDesc windowDesc {
+		.title = "Khronos Vulkan Tutorial",
+		.width = 800,
+		.height = 600,
+		.isResizable = false,
+		.isFullscreen = false,
+	};
 
-	mWindow = SDL_CreateWindow("Khronos Vulkan Tutorial", mWindowWidth, mWindowHeight, SDL_WINDOW_VULKAN);
-	if (!mWindow) {
-		LOG_ERROR("Failed to create window: {}", SDL_GetError());
+	if (!mPlatform.Init(windowDesc)) {
+		LOG_ERROR("Failed to initialize platform.");
 		return false;
 	}
 
@@ -54,13 +55,7 @@ void Game::Shutdown() {
 	LOG_INFO("Shutting down game...");
 
 	mVulkanContext.Shutdown();
-
-	if (mWindow) {
-		SDL_DestroyWindow(mWindow);
-		mWindow = nullptr;
-	}
-
-	SDL_Quit();
+	mPlatform.Destroy();
 }
 
 void Game::Render() {

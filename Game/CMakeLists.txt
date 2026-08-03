@@ -5,8 +5,10 @@ add_executable(Game
     src/Utils/VkUtils.cpp
     src/Game.cpp
     src/Main.cpp
+    src/Platform.cpp
     src/VolkImpl.cpp
     src/VulkanContext.cpp
+    src/Window.cpp
 )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
