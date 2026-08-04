@@ -1,6 +1,8 @@
 #pragma once
 
 #include "volk.h"
+#include "vk_mem_alloc.h"
+
 #include "Utils/VkUtils.h"
 
 struct Platform;
@@ -14,6 +16,8 @@ struct VulkanContext {
 
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device = VK_NULL_HANDLE;
+
+	VmaAllocator vmaAllocator = VK_NULL_HANDLE;
 
 	VkQueue graphicsQueue = VK_NULL_HANDLE;
 

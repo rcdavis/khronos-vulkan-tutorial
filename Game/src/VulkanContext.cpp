@@ -60,6 +60,11 @@ void VulkanContext::Shutdown() {
 		surface = VK_NULL_HANDLE;
 	}
 
+	if (vmaAllocator != VK_NULL_HANDLE) {
+		vmaDestroyAllocator(vmaAllocator);
+		vmaAllocator = VK_NULL_HANDLE;
+	}
+
 	if (device != VK_NULL_HANDLE) {
 		vkDestroyDevice(device, nullptr);
 		device = VK_NULL_HANDLE;
@@ -207,6 +212,23 @@ static bool VulkanContext_CreateDevice(VulkanContext& context) {
 
 	context.physicalDevice = bestDevice;
 	context.graphicsQueueFamilyIndex = queueFamilyIndex;
+
+	VmaVulkanFunctions vmaVulkanFunctions {};
+	const VmaAllocatorCreateInfo vmaAllocatorCreateInfo {
+		.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT,
+		.physicalDevice = context.physicalDevice,
+		.device = context.device,
+		.pVulkanFunctions = &vmaVulkanFunctions,
+		.instance = context.instance,
+		.vulkanApiVersion = VulkanContext::VkApiVersion,
+	};
+
+	vmaImportVulkanFunctionsFromVolk(&vmaAllocatorCreateInfo, &vmaVulkanFunctions);
+
+	if (vmaCreateAllocator(&vmaAllocatorCreateInfo, &context.vmaAllocator) != VK_SUCCESS) {
+		LOG_ERROR("Failed to create VMA allocator.");
+		return false;
+	}
 
 	return true;
 }
