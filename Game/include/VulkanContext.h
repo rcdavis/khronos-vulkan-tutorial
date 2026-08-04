@@ -5,6 +5,8 @@
 
 #include "Utils/VkUtils.h"
 
+#include <vector>
+
 struct Platform;
 
 struct VulkanContext {
@@ -25,6 +27,9 @@ struct VulkanContext {
 
 	VkSwapchainKHR swapchain = VK_NULL_HANDLE;
 	VkExtent2D swapchainExtent {};
+
+	std::vector<VkImage> swapchainImages;
+	std::vector<VkImageView> swapchainImageViews;
 
 	uint32_t graphicsQueueFamilyIndex = VkUtils::InvalidQueueFamilyIndex;
 

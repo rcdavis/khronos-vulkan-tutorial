@@ -50,6 +50,18 @@ bool VulkanContext::Init(Platform& platform) {
 }
 
 void VulkanContext::Shutdown() {
+	if (device != VK_NULL_HANDLE) {
+		if (vkDeviceWaitIdle(device) != VK_SUCCESS) {
+			LOG_ERROR("Failed to wait for Vulkan device to become idle.");
+		}
+	}
+
+	for (VkImageView imageView : swapchainImageViews) {
+		vkDestroyImageView(device, imageView, nullptr);
+	}
+	swapchainImageViews.clear();
+	swapchainImages.clear();
+
 	if (swapchain != VK_NULL_HANDLE) {
 		vkDestroySwapchainKHR(device, swapchain, nullptr);
 		swapchain = VK_NULL_HANDLE;
@@ -274,6 +286,38 @@ static bool VulkanContext_CreateSwapchain(VulkanContext& context, Platform& plat
 	if (vkCreateSwapchainKHR(context.device, &swapchainCreateInfo, nullptr, &context.swapchain) != VK_SUCCESS) {
 		LOG_ERROR("Failed to create Vulkan swapchain.");
 		return false;
+	}
+
+	uint32_t imageCount = 0;
+	if (vkGetSwapchainImagesKHR(context.device, context.swapchain, &imageCount, nullptr) != VK_SUCCESS || imageCount == 0) {
+		LOG_ERROR("Failed to get Vulkan swapchain image count.");
+		return false;
+	}
+
+	context.swapchainImages.resize(imageCount);
+	if (vkGetSwapchainImagesKHR(context.device, context.swapchain, &imageCount, std::data(context.swapchainImages)) != VK_SUCCESS) {
+		LOG_ERROR("Failed to get Vulkan swapchain images.");
+		return false;
+	}
+
+	context.swapchainImageViews.resize(imageCount);
+	for (uint32_t i = 0; i < imageCount; ++i) {
+		const VkImageViewCreateInfo imageViewCreateInfo {
+			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+			.image = context.swapchainImages[i],
+			.viewType = VK_IMAGE_VIEW_TYPE_2D,
+			.format = desiredFormat,
+			.subresourceRange = {
+				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+				.levelCount = 1,
+				.layerCount = 1,
+			},
+		};
+
+		if (vkCreateImageView(context.device, &imageViewCreateInfo, nullptr, &context.swapchainImageViews[i]) != VK_SUCCESS) {
+			LOG_ERROR("Failed to create Vulkan swapchain image view.");
+			return false;
+		}
 	}
 
 	return true;
