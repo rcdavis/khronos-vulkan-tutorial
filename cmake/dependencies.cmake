@@ -37,3 +37,13 @@ FetchContent_Declare(
     GIT_TAG 1.4.350
 )
 FetchContent_MakeAvailable(volk)
+
+set(VMA_STATIC_VULKAN_FUNCTIONS OFF CACHE BOOL "" FORCE)
+set(VMA_DYNAMIC_VULKAN_FUNCTIONS ON CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+    vma
+    GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+    GIT_TAG v3.4.0
+)
+FetchContent_MakeAvailable(vma)

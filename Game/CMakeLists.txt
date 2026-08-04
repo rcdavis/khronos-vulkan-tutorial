@@ -6,9 +6,15 @@ add_executable(Game
     src/Game.cpp
     src/Main.cpp
     src/Platform.cpp
+    src/VmaImpl.cpp
     src/VolkImpl.cpp
     src/VulkanContext.cpp
     src/Window.cpp
+)
+
+target_compile_definitions(Game PRIVATE
+    VMA_STATIC_VULKAN_FUNCTIONS=0
+    VMA_DYNAMIC_VULKAN_FUNCTIONS=1
 )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -38,5 +44,6 @@ target_compile_features(Game PRIVATE cxx_std_20)
 target_link_libraries(Game PRIVATE
     SDL3::SDL3
     volk
+    VulkanMemoryAllocator
     spdlog::spdlog_header_only
 )
