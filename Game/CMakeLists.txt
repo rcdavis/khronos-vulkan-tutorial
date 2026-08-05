@@ -37,7 +37,7 @@ target_include_directories(Game PUBLIC
 target_compile_features(Game PRIVATE cxx_std_20)
 
 target_link_libraries(Game PRIVATE
-    SDL3::SDL3
+    SDL3::SDL3-static
     volk
     VulkanMemoryAllocator
     spdlog::spdlog_header_only

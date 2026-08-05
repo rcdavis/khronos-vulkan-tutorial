@@ -21,7 +21,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(spdlog)
 
-set(SDL_TEST OFF CACHE BOOL "" FORCE)
+set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+set(SDL_STATIC ON CACHE BOOL "" FORCE)
 set(SDL_TEST_LIBRARY OFF CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
