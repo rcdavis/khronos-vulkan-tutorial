@@ -40,5 +40,5 @@ target_link_libraries(Game PRIVATE
     SDL3::SDL3-static
     volk
     VulkanMemoryAllocator
-    spdlog::spdlog_header_only
+    spdlog::spdlog
 )
