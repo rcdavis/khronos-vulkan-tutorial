@@ -6,6 +6,7 @@ add_executable(Game
     src/Game.cpp
     src/Main.cpp
     src/Platform.cpp
+    src/VmaImpl.cpp
     src/VolkImpl.cpp
     src/VulkanContext.cpp
     src/Window.cpp
@@ -36,7 +37,8 @@ target_include_directories(Game PUBLIC
 target_compile_features(Game PRIVATE cxx_std_20)
 
 target_link_libraries(Game PRIVATE
-    SDL3::SDL3
+    SDL3::SDL3-static
     volk
-    spdlog::spdlog_header_only
+    VulkanMemoryAllocator
+    spdlog::spdlog
 )

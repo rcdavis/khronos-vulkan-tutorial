@@ -8,7 +8,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(fmt)
 
 set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "" FORCE)
-set(SPDLOG_HEADER_ONLY ON CACHE BOOL "" FORCE)
+set(SPDLOG_USE_STD_FORMAT OFF CACHE BOOL "" FORCE)
+set(SPDLOG_HEADER_ONLY OFF CACHE BOOL "" FORCE)
 set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
 set(SPDLOG_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
 set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -21,13 +22,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(spdlog)
 
-set(SDL_TEST OFF CACHE BOOL "" FORCE)
+set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+set(SDL_STATIC ON CACHE BOOL "" FORCE)
 set(SDL_TEST_LIBRARY OFF CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
     SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG release-3.4.12
+    GIT_TAG release-3.4.14
 )
 FetchContent_MakeAvailable(SDL3)
 
@@ -37,3 +39,10 @@ FetchContent_Declare(
     GIT_TAG 1.4.350
 )
 FetchContent_MakeAvailable(volk)
+
+FetchContent_Declare(
+    vma
+    GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+    GIT_TAG v3.4.0
+)
+FetchContent_MakeAvailable(vma)
