@@ -31,7 +31,13 @@ struct VulkanContext {
 	std::vector<VkImage> swapchainImages;
 	std::vector<VkImageView> swapchainImageViews;
 
+	VkImage depthImage = VK_NULL_HANDLE;
+	VkImageView depthImageView = VK_NULL_HANDLE;
+	VmaAllocation depthImageAllocation = VK_NULL_HANDLE;
+
 	uint32_t graphicsQueueFamilyIndex = VkUtils::InvalidQueueFamilyIndex;
+
+	VkFormat depthFormat = VK_FORMAT_UNDEFINED;
 
 	bool Init(Platform& platform);
 

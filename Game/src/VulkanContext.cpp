@@ -56,6 +56,17 @@ void VulkanContext::Shutdown() {
 		}
 	}
 
+	if (depthImageView != VK_NULL_HANDLE) {
+		vkDestroyImageView(device, depthImageView, nullptr);
+		depthImageView = VK_NULL_HANDLE;
+	}
+
+	if (depthImage != VK_NULL_HANDLE) {
+		vmaDestroyImage(vmaAllocator, depthImage, depthImageAllocation);
+		depthImage = VK_NULL_HANDLE;
+		depthImageAllocation = VK_NULL_HANDLE;
+	}
+
 	for (VkImageView imageView : swapchainImageViews) {
 		vkDestroyImageView(device, imageView, nullptr);
 	}
@@ -98,6 +109,7 @@ void VulkanContext::Shutdown() {
 	physicalDevice = VK_NULL_HANDLE;
 	swapchainExtent = {};
 	graphicsQueueFamilyIndex = VkUtils::InvalidQueueFamilyIndex;
+	depthFormat = VK_FORMAT_UNDEFINED;
 }
 
 static bool VulkanContext_CreateInstance(VulkanContext& context) {
@@ -319,6 +331,74 @@ static bool VulkanContext_CreateSwapchain(VulkanContext& context, Platform& plat
 			return false;
 		}
 	}
+
+	constexpr std::array<VkFormat, 2> depthFormats = {
+		VK_FORMAT_D32_SFLOAT_S8_UINT,
+		VK_FORMAT_D24_UNORM_S8_UINT,
+	};
+
+	VkFormat depthFormat = VK_FORMAT_UNDEFINED;
+	for (VkFormat format : depthFormats) {
+		VkFormatProperties2 props {
+			.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2,
+		};
+		vkGetPhysicalDeviceFormatProperties2(context.physicalDevice, format, &props);
+		if (props.formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+			depthFormat = format;
+			break;
+		}
+	}
+
+	if (depthFormat == VK_FORMAT_UNDEFINED) {
+		LOG_ERROR("Failed to find a suitable Vulkan depth format.");
+		return false;
+	}
+
+	const VkImageCreateInfo depthImageCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+		.imageType = VK_IMAGE_TYPE_2D,
+		.format = depthFormat,
+		.extent = {
+			.width = context.swapchainExtent.width,
+			.height = context.swapchainExtent.height,
+			.depth = 1,
+		},
+		.mipLevels = 1,
+		.arrayLayers = 1,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.tiling = VK_IMAGE_TILING_OPTIMAL,
+		.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+	};
+
+	constexpr VmaAllocationCreateInfo depthImageAllocationCreateInfo {
+		.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+		.usage = VMA_MEMORY_USAGE_AUTO,
+	};
+
+	if (vmaCreateImage(context.vmaAllocator, &depthImageCreateInfo, &depthImageAllocationCreateInfo, &context.depthImage, &context.depthImageAllocation, nullptr) != VK_SUCCESS) {
+		LOG_ERROR("Failed to create Vulkan depth image.");
+		return false;
+	}
+
+	const VkImageViewCreateInfo depthImageViewCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+		.image = context.depthImage,
+		.viewType = VK_IMAGE_VIEW_TYPE_2D,
+		.format = depthFormat,
+		.subresourceRange = {
+			.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+			.levelCount = 1,
+			.layerCount = 1,
+		},
+	};
+
+	if (vkCreateImageView(context.device, &depthImageViewCreateInfo, nullptr, &context.depthImageView) != VK_SUCCESS) {
+		LOG_ERROR("Failed to create Vulkan depth image view.");
+		return false;
+	}
+
+	context.depthFormat = depthFormat;
 
 	return true;
 }
