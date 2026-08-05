@@ -12,11 +12,6 @@ add_executable(Game
     src/Window.cpp
 )
 
-target_compile_definitions(Game PRIVATE
-    VMA_STATIC_VULKAN_FUNCTIONS=0
-    VMA_DYNAMIC_VULKAN_FUNCTIONS=1
-)
-
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(Game PUBLIC
         DEBUG
