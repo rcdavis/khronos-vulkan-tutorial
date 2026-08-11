@@ -1,6 +1,7 @@
 project(Game)
 
 add_executable(Game
+    src/Utils/FileUtils.cpp
     src/Utils/Log.cpp
     src/Utils/VkUtils.cpp
     src/Game.cpp
