@@ -1,6 +1,7 @@
 project(Game)
 
 add_executable(Game
+    src/Utils/FileUtils.cpp
     src/Utils/Log.cpp
     src/Utils/VkUtils.cpp
     src/Game.cpp
@@ -11,6 +12,9 @@ add_executable(Game
     src/VulkanContext.cpp
     src/Window.cpp
 )
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/res
+     DESTINATION ${CMAKE_BINARY_DIR}/Game)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(Game PUBLIC
