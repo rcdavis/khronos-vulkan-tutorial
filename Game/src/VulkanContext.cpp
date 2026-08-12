@@ -1,5 +1,6 @@
 #include "VulkanContext.h"
 
+#include "Utils/FileUtils.h"
 #include "Utils/Log.h"
 #include "Config.h"
 #include "vulkan/vulkan_core.h"
@@ -19,6 +20,7 @@ constexpr static std::array RequiredDeviceExtensions = {
 static bool VulkanContext_CreateInstance(VulkanContext& context);
 static bool VulkanContext_CreateDevice(VulkanContext& context);
 static bool VulkanContext_CreateSwapchain(VulkanContext& context, Platform& platform);
+static bool VulkanContext_CreateShaders(VulkanContext& context);
 
 static int VulkanContext_GetDeviceScore(VkPhysicalDevice device);
 
@@ -43,6 +45,11 @@ bool VulkanContext::Init(Platform& platform) {
 
 	if (!VulkanContext_CreateSwapchain(*this, platform)) {
 		LOG_ERROR("Failed to create Vulkan swapchain.");
+		return false;
+	}
+
+	if (!VulkanContext_CreateShaders(*this)) {
+		LOG_ERROR("Failed to create Vulkan shaders.");
 		return false;
 	}
 
@@ -195,8 +202,14 @@ static bool VulkanContext_CreateDevice(VulkanContext& context) {
 		.pQueuePriorities = &queuePriority,
 	};
 
+	VkPhysicalDeviceVulkan11Features features11 {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+		.shaderDrawParameters = VK_TRUE,
+	};
+
 	VkPhysicalDeviceVulkan12Features features12 {
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+		.pNext = &features11,
 		.descriptorIndexing = VK_TRUE,
 		.shaderSampledImageArrayNonUniformIndexing = VK_TRUE,
 		.descriptorBindingVariableDescriptorCount = VK_TRUE,
@@ -403,6 +416,30 @@ static bool VulkanContext_CreateSwapchain(VulkanContext& context, Platform& plat
 	return true;
 }
 
+static bool VulkanContext_CreateShaders(VulkanContext& context) {
+	const auto shaderCode = FileUtils::ReadBytes("res/shader.spv");
+	if (std::empty(shaderCode)) {
+		LOG_ERROR("Failed to read shader code from file: res/shader.spv");
+		return false;
+	}
+
+	const VkShaderModuleCreateInfo shaderModuleCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+		.codeSize = std::size(shaderCode),
+		.pCode = reinterpret_cast<const uint32_t*>(std::data(shaderCode)),
+	};
+
+	VkShaderModule shaderModule {};
+	if (vkCreateShaderModule(context.device, &shaderModuleCreateInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+		LOG_ERROR("Failed to create Vulkan shader module.");
+		return false;
+	}
+
+	vkDestroyShaderModule(context.device, shaderModule, nullptr);
+
+	return true;
+}
+
 static int VulkanContext_GetDeviceScore(VkPhysicalDevice device) {
 	VkPhysicalDeviceProperties deviceProperties;
 	vkGetPhysicalDeviceProperties(device, &deviceProperties);
@@ -431,8 +468,13 @@ static int VulkanContext_GetDeviceScore(VkPhysicalDevice device) {
 		return -1;
 	}
 
+	VkPhysicalDeviceVulkan11Features features11 {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+	};
+
 	VkPhysicalDeviceVulkan12Features features12 {
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+		.pNext = &features11,
 	};
 
 	VkPhysicalDeviceVulkan13Features features13 {
@@ -448,6 +490,11 @@ static int VulkanContext_GetDeviceScore(VkPhysicalDevice device) {
 
 	if (!features2.features.samplerAnisotropy) {
 		LOG_WARN("Vulkan physical device does not support sampler anisotropy: {}", deviceProperties.deviceName);
+		return -1;
+	}
+
+	if (!features11.shaderDrawParameters) {
+		LOG_WARN("Vulkan physical device does not support shader draw parameters: {}", deviceProperties.deviceName);
 		return -1;
 	}
 
