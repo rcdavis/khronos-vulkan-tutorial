@@ -25,6 +25,9 @@ struct VulkanContext {
 
 	VkSurfaceKHR surface = VK_NULL_HANDLE;
 
+	VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+	VkPipeline graphicsPipeline = VK_NULL_HANDLE;
+
 	VkSwapchainKHR swapchain = VK_NULL_HANDLE;
 	VkExtent2D swapchainExtent {};
 

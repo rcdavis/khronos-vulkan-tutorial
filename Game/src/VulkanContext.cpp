@@ -21,7 +21,7 @@ constexpr static std::array RequiredDeviceExtensions = {
 static bool VulkanContext_CreateInstance(VulkanContext& context);
 static bool VulkanContext_CreateDevice(VulkanContext& context);
 static bool VulkanContext_CreateSwapchain(VulkanContext& context, Platform& platform);
-static bool VulkanContext_CreateShaders(VulkanContext& context);
+static bool VulkanContext_CreateShadersAndGraphicsPipeline(VulkanContext& context);
 
 static int VulkanContext_GetDeviceScore(VkPhysicalDevice device);
 
@@ -49,8 +49,8 @@ bool VulkanContext::Init(Platform& platform) {
 		return false;
 	}
 
-	if (!VulkanContext_CreateShaders(*this)) {
-		LOG_ERROR("Failed to create Vulkan shaders.");
+	if (!VulkanContext_CreateShadersAndGraphicsPipeline(*this)) {
+		LOG_ERROR("Failed to create Vulkan shaders and graphics pipeline.");
 		return false;
 	}
 
@@ -80,6 +80,16 @@ void VulkanContext::Shutdown() {
 	}
 	swapchainImageViews.clear();
 	swapchainImages.clear();
+
+	if (graphicsPipeline != VK_NULL_HANDLE) {
+		vkDestroyPipeline(device, graphicsPipeline, nullptr);
+		graphicsPipeline = VK_NULL_HANDLE;
+	}
+
+	if (pipelineLayout != VK_NULL_HANDLE) {
+		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+		pipelineLayout = VK_NULL_HANDLE;
+	}
 
 	if (swapchain != VK_NULL_HANDLE) {
 		vkDestroySwapchainKHR(device, swapchain, nullptr);
@@ -417,7 +427,7 @@ static bool VulkanContext_CreateSwapchain(VulkanContext& context, Platform& plat
 	return true;
 }
 
-static bool VulkanContext_CreateShaders(VulkanContext& context) {
+static bool VulkanContext_CreateShadersAndGraphicsPipeline(VulkanContext& context) {
 	const auto shaderCode = FileUtils::ReadBytes("res/shader.spv");
 	if (std::empty(shaderCode)) {
 		LOG_ERROR("Failed to read shader code from file: res/shader.spv");
@@ -436,6 +446,25 @@ static bool VulkanContext_CreateShaders(VulkanContext& context) {
 		return false;
 	}
 
+	const VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+	};
+
+	if (vkCreatePipelineLayout(context.device, &pipelineLayoutCreateInfo, nullptr, &context.pipelineLayout) != VK_SUCCESS) {
+		LOG_ERROR("Failed to create Vulkan pipeline layout.");
+		vkDestroyShaderModule(context.device, shaderModule, nullptr);
+		return false;
+	}
+
+	const VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+	};
+
+	constexpr VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+		.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+	};
+
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages {
 		VkPipelineShaderStageCreateInfo {
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -449,6 +478,47 @@ static bool VulkanContext_CreateShaders(VulkanContext& context) {
 			.module = shaderModule,
 			.pName = "fragMain",
 		},
+	};
+
+	constexpr VkPipelineViewportStateCreateInfo viewportStateCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+		.viewportCount = 1,
+		.scissorCount = 1,
+	};
+
+	constexpr std::array<VkDynamicState, 2> dynamicStates {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR,
+	};
+
+	const VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+		.dynamicStateCount = (uint32_t)std::size(dynamicStates),
+		.pDynamicStates = std::data(dynamicStates),
+	};
+
+	constexpr VkPipelineColorBlendAttachmentState colorBlendAttachmentState {
+		.blendEnable = VK_FALSE,
+		.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+	};
+
+	const VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+		.attachmentCount = 1,
+		.pAttachments = &colorBlendAttachmentState,
+	};
+
+	constexpr VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+		.polygonMode = VK_POLYGON_MODE_FILL,
+		.cullMode = VK_CULL_MODE_BACK_BIT,
+		.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+		.lineWidth = 1.0f,
+	};
+
+	constexpr VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+		.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
 	};
 
 	vkDestroyShaderModule(context.device, shaderModule, nullptr);
