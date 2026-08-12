@@ -6,6 +6,7 @@
 #include "vulkan/vulkan_core.h"
 
 #include "Platform.h"
+#include <array>
 
 constexpr static VkFormat ImageFormat = VK_FORMAT_B8G8R8A8_SRGB;
 
@@ -434,6 +435,21 @@ static bool VulkanContext_CreateShaders(VulkanContext& context) {
 		LOG_ERROR("Failed to create Vulkan shader module.");
 		return false;
 	}
+
+	const std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages {
+		VkPipelineShaderStageCreateInfo {
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+			.stage = VK_SHADER_STAGE_VERTEX_BIT,
+			.module = shaderModule,
+			.pName = "vertMain",
+		},
+		VkPipelineShaderStageCreateInfo {
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+			.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+			.module = shaderModule,
+			.pName = "fragMain",
+		},
+	};
 
 	vkDestroyShaderModule(context.device, shaderModule, nullptr);
 
