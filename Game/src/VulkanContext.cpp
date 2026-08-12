@@ -497,6 +497,22 @@ static bool VulkanContext_CreateShadersAndGraphicsPipeline(VulkanContext& contex
 		.pDynamicStates = std::data(dynamicStates),
 	};
 
+	constexpr VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+		.depthTestEnable = VK_TRUE,
+		.depthWriteEnable = VK_TRUE,
+		.depthCompareOp = VK_COMPARE_OP_LESS,
+		.depthBoundsTestEnable = VK_FALSE,
+		.stencilTestEnable = VK_FALSE,
+	};
+
+	const VkPipelineRenderingCreateInfo renderingCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
+		.colorAttachmentCount = 1,
+		.pColorAttachmentFormats = &ImageFormat,
+		.depthAttachmentFormat = context.depthFormat,
+	};
+
 	constexpr VkPipelineColorBlendAttachmentState colorBlendAttachmentState {
 		.blendEnable = VK_FALSE,
 		.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
@@ -520,6 +536,28 @@ static bool VulkanContext_CreateShadersAndGraphicsPipeline(VulkanContext& contex
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
 		.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
 	};
+
+	const VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+		.pNext = &renderingCreateInfo,
+		.stageCount = (uint32_t)std::size(shaderStages),
+		.pStages = std::data(shaderStages),
+		.pVertexInputState = &vertexInputStateCreateInfo,
+		.pInputAssemblyState = &inputAssemblyStateCreateInfo,
+		.pViewportState = &viewportStateCreateInfo,
+		.pRasterizationState = &rasterizationStateCreateInfo,
+		.pMultisampleState = &multisampleStateCreateInfo,
+		.pDepthStencilState = &depthStencilStateCreateInfo,
+		.pColorBlendState = &colorBlendStateCreateInfo,
+		.pDynamicState = &dynamicStateCreateInfo,
+		.layout = context.pipelineLayout,
+	};
+
+	if (vkCreateGraphicsPipelines(context.device, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &context.graphicsPipeline) != VK_SUCCESS) {
+		LOG_ERROR("Failed to create Vulkan graphics pipeline.");
+		vkDestroyShaderModule(context.device, shaderModule, nullptr);
+		return false;
+	}
 
 	vkDestroyShaderModule(context.device, shaderModule, nullptr);
 
