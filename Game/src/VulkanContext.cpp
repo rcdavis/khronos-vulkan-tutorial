@@ -428,9 +428,9 @@ static bool VulkanContext_CreateSwapchain(VulkanContext& context, Platform& plat
 }
 
 static bool VulkanContext_CreateShadersAndGraphicsPipeline(VulkanContext& context) {
-	const auto shaderCode = FileUtils::ReadBytes("res/shader.spv");
+	const auto shaderCode = FileUtils::ReadBytes("res/shaders/shader.spv");
 	if (std::empty(shaderCode)) {
-		LOG_ERROR("Failed to read shader code from file: res/shader.spv");
+		LOG_ERROR("Failed to read shader code from file: res/shaders/shader.spv");
 		return false;
 	}
 
