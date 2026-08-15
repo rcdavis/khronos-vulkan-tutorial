@@ -21,6 +21,7 @@ constexpr static std::array RequiredDeviceExtensions = {
 static bool VulkanContext_CreateInstance(VulkanContext& context);
 static bool VulkanContext_CreateDevice(VulkanContext& context);
 static bool VulkanContext_CreateSwapchain(VulkanContext& context, Platform& platform);
+static bool VulkanContext_CreateCommandBuffers(VulkanContext& context);
 static bool VulkanContext_CreateShadersAndGraphicsPipeline(VulkanContext& context);
 
 static int VulkanContext_GetDeviceScore(VkPhysicalDevice device);
@@ -49,6 +50,11 @@ bool VulkanContext::Init(Platform& platform) {
 		return false;
 	}
 
+	if (!VulkanContext_CreateCommandBuffers(*this)) {
+		LOG_ERROR("Failed to create Vulkan command buffers.");
+		return false;
+	}
+
 	if (!VulkanContext_CreateShadersAndGraphicsPipeline(*this)) {
 		LOG_ERROR("Failed to create Vulkan shaders and graphics pipeline.");
 		return false;
@@ -62,6 +68,10 @@ void VulkanContext::Shutdown() {
 		if (vkDeviceWaitIdle(device) != VK_SUCCESS) {
 			LOG_ERROR("Failed to wait for Vulkan device to become idle.");
 		}
+	}
+
+	for (uint32_t i = 0; i < MaxFramesInFlight; ++i) {
+		commandBuffers[i] = VK_NULL_HANDLE;
 	}
 
 	if (depthImageView != VK_NULL_HANDLE) {
@@ -99,6 +109,11 @@ void VulkanContext::Shutdown() {
 	if (surface != VK_NULL_HANDLE) {
 		vkDestroySurfaceKHR(instance, surface, nullptr);
 		surface = VK_NULL_HANDLE;
+	}
+
+	if (commandPool != VK_NULL_HANDLE) {
+		vkDestroyCommandPool(device, commandPool, nullptr);
+		commandPool = VK_NULL_HANDLE;
 	}
 
 	if (vmaAllocator != VK_NULL_HANDLE) {
@@ -423,6 +438,33 @@ static bool VulkanContext_CreateSwapchain(VulkanContext& context, Platform& plat
 	}
 
 	context.depthFormat = depthFormat;
+
+	return true;
+}
+
+static bool VulkanContext_CreateCommandBuffers(VulkanContext& context) {
+	const VkCommandPoolCreateInfo commandPoolCreateInfo {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+		.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+		.queueFamilyIndex = context.graphicsQueueFamilyIndex,
+	};
+
+	if (vkCreateCommandPool(context.device, &commandPoolCreateInfo, nullptr, &context.commandPool) != VK_SUCCESS) {
+		LOG_ERROR("Failed to create Vulkan command pool.");
+		return false;
+	}
+
+	const VkCommandBufferAllocateInfo commandBufferAllocateInfo {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		.commandPool = context.commandPool,
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+		.commandBufferCount = VulkanContext::MaxFramesInFlight,
+	};
+
+	if (vkAllocateCommandBuffers(context.device, &commandBufferAllocateInfo, std::data(context.commandBuffers)) != VK_SUCCESS) {
+		LOG_ERROR("Failed to allocate Vulkan command buffers.");
+		return false;
+	}
 
 	return true;
 }
