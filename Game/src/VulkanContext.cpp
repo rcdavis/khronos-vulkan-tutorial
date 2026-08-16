@@ -470,9 +470,9 @@ static bool VulkanContext_CreateCommandBuffers(VulkanContext& context) {
 }
 
 static bool VulkanContext_CreateShadersAndGraphicsPipeline(VulkanContext& context) {
-	const auto shaderCode = FileUtils::ReadBytes("res/shaders/shader.spv");
+	const auto shaderCode = FileUtils::ReadBytes(Config::ShaderSpvFile);
 	if (std::empty(shaderCode)) {
-		LOG_ERROR("Failed to read shader code from file: res/shaders/shader.spv");
+		LOG_ERROR("Failed to read shader code from file: {}", Config::ShaderSpvFile);
 		return false;
 	}
 
