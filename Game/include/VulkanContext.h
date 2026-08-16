@@ -12,6 +12,8 @@ struct Platform;
 struct VulkanContext {
 	constexpr static uint32_t VkApiVersion = VK_API_VERSION_1_3;
 
+	constexpr static uint32_t MaxFramesInFlight = 2;
+
 	VkInstance instance = VK_NULL_HANDLE;
 
 	VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
@@ -25,6 +27,8 @@ struct VulkanContext {
 
 	VkSurfaceKHR surface = VK_NULL_HANDLE;
 
+	VkCommandPool commandPool = VK_NULL_HANDLE;
+
 	VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
 	VkPipeline graphicsPipeline = VK_NULL_HANDLE;
 
@@ -33,6 +37,8 @@ struct VulkanContext {
 
 	std::vector<VkImage> swapchainImages;
 	std::vector<VkImageView> swapchainImageViews;
+
+	std::array<VkCommandBuffer, MaxFramesInFlight> commandBuffers {};
 
 	VkImage depthImage = VK_NULL_HANDLE;
 	VkImageView depthImageView = VK_NULL_HANDLE;

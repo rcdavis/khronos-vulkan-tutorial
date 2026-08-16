@@ -6,4 +6,6 @@ namespace Config {
 #else
 	constexpr bool EnableValidationLayers = true;
 #endif
+
+	constexpr const char* ShaderSpvFile = "res/shaders/shader.spv";
 }
