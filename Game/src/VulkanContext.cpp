@@ -488,7 +488,7 @@ static bool VulkanContext_CreateShadersAndGraphicsPipeline(VulkanContext& contex
 		return false;
 	}
 
-	const VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo {
+	constexpr VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo {
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 	};
 
@@ -498,7 +498,7 @@ static bool VulkanContext_CreateShadersAndGraphicsPipeline(VulkanContext& contex
 		return false;
 	}
 
-	const VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo {
+	constexpr VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo {
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
 	};
 
